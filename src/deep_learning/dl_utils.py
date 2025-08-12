@@ -1,10 +1,9 @@
 #program with tools which will be needed frequently over studentship for analysing data 
-#use pandas to import and manage dataset
+
 import pandas as pd
-
-#perform requisite math operations with numpy
 import numpy as np
-
+import torch
+from torch.utils.data import Dataset, DataLoader, Subset
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
@@ -12,6 +11,18 @@ imputed_data_path = r"\\isd_netapp\Cardiac$\UKBB_40616\Phenotypes\img_features_a
 
 #file to store column titles for later use
 dl_columns_path = r"P:\\MQ_Summer_Student\\dataset_info\\dl_column_names.csv"
+
+class features_labels_Dataset(Dataset):
+    def __init__(self,X,y,dtype=torch.float32):
+        self.X = torch.tensor(X, dtype=dtype)
+        self.y = torch.tensor(y, dtype=dtype).view(-1,1)
+
+    def __len__(self):
+        return len(self.X)
+    
+    def _getitem_(self, idx):
+        return self.X[idx], self.y[idx]
+    
 
 
 #import tabular data from cardiac$
@@ -46,6 +57,21 @@ def preprocess():
     df.dropna(subset=['SBP_at_MRI'], inplace = True)
 
     return df
+
+def dataloader(df, test_size = 0.3, random_state = None):
+    #split data into features and labels
+    Y = df['SBP_at_MRI']
+    X = df.drop(columns=['SBP_at_MRI'])
+
+    fullDataset = features_labels_Dataset(df)
+
+    #index dataset by creating an np array of indices
+    indices = np.arange(len(fullDataset))
+    #initial split into test set and temp(training + validation)
+    temp_idx, test_idx = train_test_split(indices, test_size = test_size, random_state = random_state)
+
+    #split temp into training and validation
+    train_idx, val_idx = train_test_split
 
 def split_and_normalize(df, mode = 1, test_size=0.2, random_state=None,):
     #split data into features and labels
@@ -93,3 +119,5 @@ if __name__ == "__main__":
     column_names_df = pd.DataFrame(column_names, columns=['Column Names'])
     column_names_df.to_csv(dl_columns_path, index=False)
     print("Column names saved to:", dl_columns_path)
+    dataloader(df)
+    print("Data loading complete")
