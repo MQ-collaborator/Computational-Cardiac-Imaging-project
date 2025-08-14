@@ -28,4 +28,16 @@ RVAE_regressor_path = model_directory / "RVAE_regressor.pth"
 # Make sure you don't accidentally put in additional processing 'layers' (problem in earlier versions)
 class Autoencoder(nn,Module):
     def __init__(self, input_size)
-        self.encoder = nn.Sequential)
+        self.encoder = nn.Sequential(
+            nn.Linear(input_size, 32),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(32,16),
+            nn.ReLU(),
+            nn.Linear(16,8),
+            nn.ReLU(),
+            nn.Linear(8,4)
+
+        )
+
+        self.encoder

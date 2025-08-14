@@ -68,7 +68,11 @@ def dataloader(df, test_size = 0.2, val_size=0.2, random_state = None, generate_
     Y = df['SBP_at_MRI']
     X = df.drop(columns=['SBP_at_MRI'])
 
-    fullDataset = features_labels_Dataset(X.values,Y.values)
+    #Normalize all data
+    scaler = StandardScaler()
+    X = scaler.fit_transform(X)
+    Y = scaler.fit_transform(Y.values.reshape(-1, 1)).flatten()
+    fullDataset = features_labels_Dataset(X,Y)
 
     if generate_indices:
         print("Generating indices...")
