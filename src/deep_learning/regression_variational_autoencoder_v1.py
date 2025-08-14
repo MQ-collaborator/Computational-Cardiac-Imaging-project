@@ -25,7 +25,7 @@ RVAE_deconder_path = model_directory / "RVAE_decoder.pth"
 RVAE_regressor_path = model_directory / "RVAE_regressor.pth"
 
 #implement a Regression loss variational autoencoder
-#I am almost certain there were some errors last time in how you consrtucted the layers. Make sure you don't accidentally put in additional processing 'layers'
+# Make sure you don't accidentally put in additional processing 'layers' (problem in earlier versions)
 class Autoencoder(nn,Module):
     def __init__(self, input_size)
         self.encoder = nn.Sequential)

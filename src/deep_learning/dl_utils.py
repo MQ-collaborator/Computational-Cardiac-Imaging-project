@@ -6,11 +6,16 @@ import torch
 from torch.utils.data import Dataset, DataLoader, Subset
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from pathlib import Path
 
 imputed_data_path = r"\\isd_netapp\Cardiac$\UKBB_40616\Phenotypes\img_features_all_rf_imputed_48k_with_biochem.csv"
 
+#configure file paths to be relative to current file
+home_directory = Path(__file__).parent.parent.parent # outermost directory
+dataset_info_directory = home_directory / "data" / "dataset_info"
+
 #file to store column titles for later use
-dl_columns_path = r"P:\\MQ_Summer_Student\\dataset_info\\dl_column_names.csv"
+dl_columns_path = dataset_info_directory / "dl_column_names.csv"
 
 class features_labels_Dataset(Dataset):
     def __init__(self,X,y,dtype=torch.float32):
@@ -58,20 +63,52 @@ def preprocess():
 
     return df
 
-def dataloader(df, test_size = 0.3, random_state = None):
+def dataloader(df, test_size = 0.2, val_size=0.2, random_state = None, generate_indices = False):
     #split data into features and labels
     Y = df['SBP_at_MRI']
     X = df.drop(columns=['SBP_at_MRI'])
 
-    fullDataset = features_labels_Dataset(df)
+    fullDataset = features_labels_Dataset(X.values,Y.values)
 
-    #index dataset by creating an np array of indices
-    indices = np.arange(len(fullDataset))
-    #initial split into test set and temp(training + validation)
-    temp_idx, test_idx = train_test_split(indices, test_size = test_size, random_state = random_state)
+    if generate_indices:
+        print("Generating indices...")
+        #index dataset by creating an np array of indices
+        indices = np.arange(len(fullDataset))
+        #initial split into train and (test+validation)
+        train_idx, temp_idx = train_test_split(indices, test_size = (test_size+val_size), random_state = random_state)
 
-    #split temp into training and validation
-    train_idx, val_idx = train_test_split
+        #split temp into validation and testing
+        val_idx, test_idx = train_test_split(temp_idx, test_size = (test_size/(test_size + val_size)))
+
+        #save indices that have been generated as npz file
+        np.savez("./helper_data/split_indices.npz", train = train_idx, val = val_idx, test = test_idx)
+
+    else:
+        #load existing indixes
+        split_indices = np.load("./helper_data/split_indices.npz")
+        train_idx = split_indices["train"]
+        val_idx = split_indices["val"]
+        test_idx = split_indices["test"]
+
+
+    #create subsets using indices
+    train_ds = Subset(fullDataset, train_idx)
+    val_ds = Subset(fullDataset, val_idx)
+    test_ds = Subset(fullDataset, test_idx)
+    print("The sizes of datasets are as follows:")
+    print(f"Training: {len(train_idx)}")
+    print(f"Testing: {len(test_idx)}")
+    print(f"ValidationL {len(val_idx)}")
+
+    #Dataloaders
+    batch_size = 128
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle= True, num_workers = 0, drop_last = False)
+    val_loader = DataLoader(val_ds, batch_size = batch_size, shuffle = True, num_workers = 0)
+    test_loader = DataLoader(test_ds, batch_size = batch_size, num_workers = 0)
+
+    return train_loader , val_loader, test_loader
+
+
 
 def split_and_normalize(df, mode = 1, test_size=0.2, random_state=None,):
     #split data into features and labels
@@ -114,10 +151,11 @@ def split_and_normalize(df, mode = 1, test_size=0.2, random_state=None,):
 
 if __name__ == "__main__":
     df = preprocess()
+    dataloader(df, generate_indices = True)
     #save column names to a file to check which to remove
     column_names = df.drop(columns=['SBP_at_MRI']).columns
     column_names_df = pd.DataFrame(column_names, columns=['Column Names'])
     column_names_df.to_csv(dl_columns_path, index=False)
     print("Column names saved to:", dl_columns_path)
-    dataloader(df)
+
     print("Data loading complete")
