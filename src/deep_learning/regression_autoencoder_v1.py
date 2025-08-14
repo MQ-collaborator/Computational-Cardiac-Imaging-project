@@ -27,7 +27,7 @@ RVAE_regressor_path = model_directory / "RVAE_regressor.pth"
 #implement a Regression loss variational autoencoder
 # Make sure you don't accidentally put in additional processing 'layers' (problem in earlier versions)
 class Autoencoder(nn,Module):
-    def __init__(self, input_size)
+    def __init__(self, input_size):
         self.encoder = nn.Sequential(
             nn.Linear(input_size, 32),
             nn.ReLU(),
@@ -36,8 +36,14 @@ class Autoencoder(nn,Module):
             nn.ReLU(),
             nn.Linear(16,8),
             nn.ReLU(),
-            nn.Linear(8,4)
+            nn.Linear(8,8) #2 layers of same size as latent dimension (consecutive). no activatino to give raw latent space
 
         )
 
-        self.encoder
+        self.decoder = nn.Sequential(
+            nn.Linear(8,16),
+            nn.ReLU(),
+            nn.Linear(16,32),
+            nn.ReLU(),
+            nn.Linear(32,input_size) # no activation to match normalization of inputs
+        )
