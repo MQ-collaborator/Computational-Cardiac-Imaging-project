@@ -4,8 +4,8 @@ These values when saved than then be used to perform PCA or to train a linear re
 
 we expect to be able to explain more than 9-% of variance with 16 latent variables"""
 import dl_utils
-import autoencoder
-from autoencoder import AutoEncoder
+import deep_learning.pure_autoencoder as pure_autoencoder
+from deep_learning.pure_autoencoder import AutoEncoder
 import pandas as pd
 import torch
 
@@ -18,7 +18,7 @@ def main():
     #load encoder
     input_size = X.shape[1]
     model = AutoEncoder(input_size)
-    model.encoder.load_state_dict(torch.load(autoencoder.encoder_path))
+    model.encoder.load_state_dict(torch.load(pure_autoencoder.encoder_path))
 
     #encode data
     X_encoded = model.encoder(torch.from_numpy(X).float()).detach().numpy()

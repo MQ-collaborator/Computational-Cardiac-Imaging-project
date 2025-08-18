@@ -1,9 +1,10 @@
 import dl_utils
+from regression_autoencoder_model import Regression_Autoencoder
 import torch
 from torch import nn, optim
 from torchvision import datasets, transforms
 import matplotlib.pyplot as plt
-import time
+
 
 #deep learning hyperperameters
 
@@ -18,26 +19,7 @@ encoder_path = 'encoder.pth'
 decoder_path = 'decoder.pth'
 
 EPOCHS = 70
-class AutoEncoder(nn.Module):
-    def __init__(self, input_size):
-        super(AutoEncoder, self).__init__()
-        self.encoder = nn.Sequential(
-            nn.Linear(input_size, 32),
-            nn.Sigmoid(),
-            nn.Dropout(0.2),
-            nn.Linear(32,16)
-        )
 
-        self.decoder = nn.Sequential(
-            nn.Linear(16,32),
-            nn.Sigmoid(),
-            nn.Linear(32,input_size)
-        )
-    
-    def forward(self,x):
-            encoded = self.encoder(x)
-            decoded = self.decoder(encoded)
-            return decoded
 def main():
     #load data
     X_train, X_val, X_test, Y_train, Y_val, Y_test = dl_utils.split_and_normalize(dl_utils.preprocess(), mode=1)
@@ -53,7 +35,7 @@ def main():
 
     input_size = X_train.shape[1]
     
-    model = AutoEncoder(input_size)
+    model = Regression_Autoencoder(input_size)
 
     loss_function = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=ETA, weight_decay=LAMBDA)
