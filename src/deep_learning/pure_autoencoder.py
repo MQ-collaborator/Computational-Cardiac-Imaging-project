@@ -15,14 +15,14 @@ pure_decoder_path = model_directory / "pure_decoder.pth"
 #deep learning hyperperameters
 
 #learning rate for backpropagation
-ETA = 5e-5
+ETA = 3e-5
 
 #Weight-decay is scaling factor for L2 regularization
-LAMBDA = 1e-7
+LAMBDA = 1e-9
 
 
 
-EPOCHS = 5
+EPOCHS = 70
 
 def train_model(load_old_model = True):
     #load data
@@ -34,11 +34,17 @@ def train_model(load_old_model = True):
         input_size = X_batch.shape[1]
         break
 
-    if not load_old_model:
-        model = Regression_Autoencoder(input_size)
-    else:
-        model = Regression_Autoencoder(*args, **kwargs)
-        model.load_stat_dict(torch)
+    #use CUDA to make use of any avilable NVIDIA GPus, if not just use CPU
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+    model = Regression_Autoencoder(input_size)
+    if load_old_model:
+        encoder_state = torch.load(pure_encoder_path, map_location = device)
+        decoder_state = torch.load(pure_decoder_path, map_location = device)
+        model.encoder.load_state_dict(encoder_state)
+        model.decoder.load_state_dict(decoder_state)
+        print("Old model loaded")
 
     loss_function = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=ETA, weight_decay=LAMBDA)
@@ -47,8 +53,7 @@ def train_model(load_old_model = True):
     epoch_losses=[]
     #training_losses = []
     validation_losses = []
-    #use CUDA to make use of any avilable NVIDIA GPus, if not just use CPU
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
     model.to(device)
 
     print("Initializing training on", device)
@@ -126,4 +131,4 @@ def plot_data(loss1, loss2, block=False):
 
 
 if __name__ == "__main__":
-    train_model(load_old_model = False)
+    train_model(load_old_model = True)
