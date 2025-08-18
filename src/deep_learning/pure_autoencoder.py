@@ -1,9 +1,15 @@
 import dl_utils
-from regression_autoencoder_model import Regression_Autoencoder
+from regression_autoencoder_model import Regression_Autoencoder, model_directory, recon_loss, regression_loss, RAE_loss
 import torch
 from torch import nn, optim
 from torchvision import datasets, transforms
 import matplotlib.pyplot as plt
+
+
+#configure file paths to save models
+
+pure_encoder_path = model_directory / "pure_encoder.pth"
+pure_decoder_path = model_directory / "pure_decoder.pth"
 
 
 #deep learning hyperperameters
@@ -14,30 +20,23 @@ ETA = 5e-5
 #Weight-decay is scaling factor for L2 regularization
 LAMBDA = 1e-7
 
-#file path for saving model parameters within current deep_learning directory
-encoder_path = 'encoder.pth'
-decoder_path = 'decoder.pth'
+
 
 EPOCHS = 70
 
 def main():
     #load data
-    X_train, X_val, X_test, Y_train, Y_val, Y_test = dl_utils.split_and_normalize(dl_utils.preprocess(), mode=1)
-    print("Shape of X_train:", X_train.shape)
-    print("Shape of Y_train:", Y_train.shape)
-    X_train = torch.from_numpy(X_train).float()
-    Y_train = torch.from_numpy(Y_train).float()
-    X_val = torch.from_numpy(X_val).float()
-    Y_val = torch.from_numpy(Y_val).float()
-    X_test = torch.from_numpy(X_test).float()
-    Y_test = torch.from_numpy(Y_test).float()
-
-
-    input_size = X_train.shape[1]
+    train_loader , val_loader, test_loader = dl_utils.dataloader(dl_utils.preprocess())
     
+    #get shape of inputs by iterating once through a DataLoader
+    for X_batch, _ in train_loader:
+        print("Input batch shapeL", X_batch.shape)
+        input_size = X_batch.shape[1]
+        break
+
     model = Regression_Autoencoder(input_size)
 
-    loss_function = nn.MSELoss()
+    loss_function = recon_loss()
     optimizer = optim.Adam(model.parameters(), lr=ETA, weight_decay=LAMBDA)
 
     #epoch losses stores the normalised training loss of each epoch
@@ -91,8 +90,8 @@ def main():
     print(f"Test Loss: {test_loss:.6f}")
 
     #Save model parameters for later use, separating encoder and decoder
-    torch.save(model.encoder.state_dict(), encoder_path)
-    torch.save(model.decoder.state_dict(), decoder_path)
+    torch.save(model.encoder.state_dict(), pure_encoder_path)
+    torch.save(model.decoder.state_dict(), pure_decoder_path)
     
     plot_data(epoch_losses, validation_losses, block=True)
 

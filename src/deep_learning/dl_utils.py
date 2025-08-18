@@ -5,9 +5,9 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader, Subset
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler #ideal scaling for ReLU
 from pathlib import Path
-
+from joblib import dump, load
 imputed_data_path = r"\\isd_netapp\Cardiac$\UKBB_40616\Phenotypes\img_features_all_rf_imputed_48k_with_biochem.csv"
 
 #configure file paths to be relative to current file
@@ -16,6 +16,9 @@ dataset_info_directory = home_directory / "data" / "dataset_info"
 
 #file to store column titles for later use
 dl_columns_path = dataset_info_directory / "dl_column_names.csv"
+
+#store scalers and indices for reuse
+helper_directory = r"./helper_data"
 
 class features_labels_Dataset(Dataset):
     def __init__(self,X,y,dtype=torch.float32):
@@ -63,15 +66,27 @@ def preprocess():
 
     return df
 
-def dataloader(df, test_size = 0.2, val_size=0.2, random_state = None, generate_indices = False):
+def dataloader(df, test_size = 0.2, val_size=0.2, random_state = None, generate_indices = False, new_scaler = False):
     #split data into features and labels
     Y = df['SBP_at_MRI']
     X = df.drop(columns=['SBP_at_MRI'])
 
-    #Normalize all data
-    scaler = StandardScaler()
-    X = scaler.fit_transform(X)
-    Y = scaler.fit_transform(Y.values.reshape(-1, 1)).flatten()
+    #Normalize all data using scalers
+    if new_scaler:
+        x_scaler = MinMaxScaler()
+        y_scaler = MinMaxScaler()
+        X = x_scaler.fit_transform(X)
+        Y = y_scaler.fit_transform(Y.values.reshape(-1, 1)).flatten()
+        dump(x_scaler, f"{helper_directory}/x_scaler.joblib")
+        dump(y_scaler, f"{helper_directory}/y_scaler.joblib")
+
+        #store scalars for later inference
+    else:
+        x_scaler = load("x_scaler.joblib")
+        y_scaler = load("y_scaler.joblib")
+        X = x_scaler.transform(X)
+        Y = y_scaler.transform(Y.values.reshape(-1, 1)).flatten()
+
     fullDataset = features_labels_Dataset(X,Y)
 
     if generate_indices:
@@ -89,7 +104,7 @@ def dataloader(df, test_size = 0.2, val_size=0.2, random_state = None, generate_
 
     else:
         #load existing indixes
-        split_indices = np.load("./helper_data/split_indices.npz")
+        split_indices = np.load(f"{helper_directory}/split_indices.npz")
         train_idx = split_indices["train"]
         val_idx = split_indices["val"]
         test_idx = split_indices["test"]
@@ -102,7 +117,7 @@ def dataloader(df, test_size = 0.2, val_size=0.2, random_state = None, generate_
     print("The sizes of datasets are as follows:")
     print(f"Training: {len(train_idx)}")
     print(f"Testing: {len(test_idx)}")
-    print(f"ValidationL {len(val_idx)}")
+    print(f"Validation {len(val_idx)}")
 
     #Dataloaders
     batch_size = 128
@@ -114,48 +129,9 @@ def dataloader(df, test_size = 0.2, val_size=0.2, random_state = None, generate_
 
 
 
-def split_and_normalize(df, mode = 1, test_size=0.2, random_state=None,):
-    #split data into features and labels
-    Y = df['SBP_at_MRI']
-    X = df.drop(columns=['SBP_at_MRI'])
-    
-    #normalize all data to be encoded
-    if mode == 0:
-        scaler = StandardScaler()
-        X = scaler.fit_transform(X)
-        Y = scaler.fit_transform(Y.values.reshape(-1, 1)).flatten()
-
-        return X, Y
-
-    #mode 1 is used to train autoencoder. Returns a validation set, training set and testing set
-    elif mode == 1:
-        #split data into features and labels
-        Y = df['SBP_at_MRI']
-        X = df.drop(columns=['SBP_at_MRI'])
-
-        #Normalize all data
-        scaler = StandardScaler()
-        X = scaler.fit_transform(X)
-        Y = scaler.fit_transform(Y.values.reshape(-1, 1)).flatten()
-
-        #Separates (training + validation) and test sets
-        X_train_val, X_test, Y_train_val, Y_test = train_test_split(X, Y, test_size=test_size, random_state=random_state)
-
-        #separate training and validation sets
-        X_train, X_val, Y_train, Y_val = train_test_split(X_train_val, Y_train_val, test_size=test_size, random_state=random_state)
-
-
-        #return testing, training and validation sets
-        return X_train, X_val, X_test, Y_train, Y_val, Y_test
-   
-
-
-    return X_train, X_test, Y_train, Y_test
-
-
 if __name__ == "__main__":
     df = preprocess()
-    dataloader(df, generate_indices = True)
+    dataloader(df, generate_indices = True, new_scaler = True)
     #save column names to a file to check which to remove
     column_names = df.drop(columns=['SBP_at_MRI']).columns
     column_names_df = pd.DataFrame(column_names, columns=['Column Names'])

@@ -1,4 +1,4 @@
-from torch import nn, Module
+from torch import nn
 import matplotlib.pyplot as plt
 from pathlib import Path
 
@@ -20,13 +20,12 @@ EPOCHS =1
 home_directory = Path(__file__).parent.parent
 model_directory = home_directory / "models"
 
-RVAE_encoder_path = model_directory / "RVAE_encoder.pth"
-RVAE_deconder_path = model_directory / "RVAE_decoder.pth"
+
 RVAE_regressor_path = model_directory / "RVAE_regressor.pth"
 
 #implement a Regression loss variational autoencoder
 # Make sure you don't accidentally put in additional processing 'layers' (problem in earlier versions)
-class Regression_Autoencoder(nn,Module):
+class Regression_Autoencoder(nn.Module):
     def __init__(self, input_size, latent_dim = 8):
         self.encoder = nn.Sequential(
             nn.Linear(input_size, 32),
@@ -65,7 +64,6 @@ class Regression_Autoencoder(nn,Module):
             nn.Linear(4,2),
             nn.ReLU(),
             nn.Linear(2,1),
-            nn.ReLU(),
 
         )
     def encode(self,x):
@@ -87,3 +85,19 @@ class Regression_Autoencoder(nn,Module):
         prediction = self.nn_prediction(z),
         return prediction
 
+def recon_loss(x,x_hat):
+    recon_loss = nn.MSELoss(x,x_hat)
+
+    return recon_loss
+
+def regression_loss(y,y_pred):
+    #pretty simple to use L2 loss for regression
+    return nn.MSELoss(y,y_pred)
+
+def RAE_loss(x, x_hat, y_pred, y, beta = 0.2):
+    #mixed loss function for reconstruction and rergession
+    recon_loss = recon_loss(x, x_hat)
+    regression_loss = regression_loss(y, y_pred)
+
+    hybrid_loss = regression_loss + beta * recon_loss
+    return hybrid_loss
