@@ -22,7 +22,7 @@ LAMBDA = 1e-7
 
 
 
-EPOCHS = 70
+EPOCHS = 2
 
 def main():
     #load data
@@ -50,10 +50,11 @@ def main():
     print("Initializing training on", device)
     for epoch in range(EPOCHS):
         epoch_loss = 0
-        for patient in X_train:
-            reconstructed = model(patient)
+        for X_batch,_ in train_loader:
             
-            loss = loss_function(reconstructed, patient)
+            reconstructed = model.forward(X_batch)
+            
+            loss = loss_function(reconstructed, X_batch)
 
             optimizer.zero_grad()
             loss.backward()
@@ -67,9 +68,9 @@ def main():
         #calculate validation loss for epoch
         with torch.no_grad():
             val_loss = 0
-            for val_patient in X_val:
-                reconstructed_val = model(val_patient)
-                val_loss += loss_function(reconstructed_val, val_patient).item()
+            for X_batch, _ in val_loader:
+                reconstructed_val = model.forward(X_batch)
+                val_loss += loss_function(reconstructed_val, X_batch).item()
             val_loss /= len(X_val)
             validation_losses.append(val_loss)
         #stop training if validation loss starts to increase for multiple epochs
@@ -83,9 +84,9 @@ def main():
     #test the model on the test set
     test_loss = 0
     with torch.no_grad():
-        for test_patient in X_test:
-            reconstructed_test = model(test_patient)
-            test_loss += loss_function(reconstructed_test, test_patient).item()
+        for X_batch,_ in test_loader:
+            reconstructed_test = model(X_batch)
+            test_loss += loss_function(reconstructed_test, X_batch).item()
         test_loss /= len(X_test)
     print(f"Test Loss: {test_loss:.6f}")
 

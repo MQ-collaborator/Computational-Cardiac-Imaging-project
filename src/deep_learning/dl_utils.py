@@ -82,8 +82,8 @@ def dataloader(df, test_size = 0.2, val_size=0.2, random_state = None, generate_
 
         #store scalars for later inference
     else:
-        x_scaler = load("x_scaler.joblib")
-        y_scaler = load("y_scaler.joblib")
+        x_scaler = load(f"{helper_directory}/x_scaler.joblib")
+        y_scaler = load(f"{helper_directory}/y_scaler.joblib")
         X = x_scaler.transform(X)
         Y = y_scaler.transform(Y.values.reshape(-1, 1)).flatten()
 
