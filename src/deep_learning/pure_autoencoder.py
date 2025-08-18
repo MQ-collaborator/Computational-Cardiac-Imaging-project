@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 
 #configure file paths to save models
-
+print(f"model directory: {model_directory}")
 pure_encoder_path = model_directory / "pure_encoder.pth"
 pure_decoder_path = model_directory / "pure_decoder.pth"
 
@@ -22,21 +22,25 @@ LAMBDA = 1e-7
 
 
 
-EPOCHS = 2
+EPOCHS = 5
 
-def main():
+def train_model(load_old_model = True):
     #load data
     train_loader , val_loader, test_loader = dl_utils.dataloader(dl_utils.preprocess())
     
     #get shape of inputs by iterating once through a DataLoader
     for X_batch, _ in train_loader:
-        print("Input batch shapeL", X_batch.shape)
+        print("Input batch shape", X_batch.shape)
         input_size = X_batch.shape[1]
         break
 
-    model = Regression_Autoencoder(input_size)
+    if not load_old_model:
+        model = Regression_Autoencoder(input_size)
+    else:
+        model = Regression_Autoencoder(*args, **kwargs)
+        model.load_stat_dict(torch)
 
-    loss_function = recon_loss()
+    loss_function = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=ETA, weight_decay=LAMBDA)
 
     #epoch losses stores the normalised training loss of each epoch
@@ -63,7 +67,7 @@ def main():
             
             #training_losses.append(loss.item())
             epoch_loss += loss.item()
-        epoch_loss /= len(X_train)
+        epoch_loss /= len(train_loader)
         epoch_losses.append(epoch_loss)
         #calculate validation loss for epoch
         with torch.no_grad():
@@ -71,8 +75,9 @@ def main():
             for X_batch, _ in val_loader:
                 reconstructed_val = model.forward(X_batch)
                 val_loss += loss_function(reconstructed_val, X_batch).item()
-            val_loss /= len(X_val)
+            val_loss /= len(val_loader)
             validation_losses.append(val_loss)
+
         #stop training if validation loss starts to increase for multiple epochs
         if epoch % 4 == 0 or epoch == EPOCHS - 1:
             #if average of the last 2 validations losses is greater than the average of the previous 2, stop training
@@ -87,7 +92,7 @@ def main():
         for X_batch,_ in test_loader:
             reconstructed_test = model(X_batch)
             test_loss += loss_function(reconstructed_test, X_batch).item()
-        test_loss /= len(X_test)
+        test_loss /= len(test_loader)
     print(f"Test Loss: {test_loss:.6f}")
 
     #Save model parameters for later use, separating encoder and decoder
@@ -121,4 +126,4 @@ def plot_data(loss1, loss2, block=False):
 
 
 if __name__ == "__main__":
-    main()
+    train_model(load_old_model = False)

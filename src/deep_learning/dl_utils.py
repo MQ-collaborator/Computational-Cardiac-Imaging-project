@@ -25,10 +25,12 @@ class features_labels_Dataset(Dataset):
         self.X = torch.tensor(X, dtype=dtype)
         self.y = torch.tensor(y, dtype=dtype).view(-1,1)
 
+        #sanity check for implementation
+        assert len(self.X) == len(self.y) #check lengths match
     def __len__(self):
         return len(self.X)
     
-    def _getitem_(self, idx):
+    def __getitem__(self, idx):
         return self.X[idx], self.y[idx]
     
 

@@ -17,16 +17,17 @@ LAMBDA = 1e-7
 EPOCHS =1 
 
 #configure file paths to load data and save models
-home_directory = Path(__file__).parent.parent
+home_directory = Path(__file__).parent.parent.parent
 model_directory = home_directory / "models"
 
 
-RVAE_regressor_path = model_directory / "RVAE_regressor.pth"
+
 
 #implement a Regression loss variational autoencoder
 # Make sure you don't accidentally put in additional processing 'layers' (problem in earlier versions)
 class Regression_Autoencoder(nn.Module):
     def __init__(self, input_size, latent_dim = 8):
+        super().__init__()
         self.encoder = nn.Sequential(
             nn.Linear(input_size, 32),
             nn.ReLU(),
