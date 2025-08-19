@@ -6,6 +6,34 @@ from regression_autoencoder_model import Regression_Autoencoder
 import torch
 import numpy as np
 
+#store separated embeddings for reuse
+helper_directory = r"./helper_data"
+latent_embeddings_path = helper_directory + "/embeddings.npz"
+
+def load_embeddings(path = latent_embeddings_path):
+    #load latent embeddings from npz file
+    all_embeddings = np.load(latent_embeddings_path)
+    #separate embeddings into 3 distinct set
+    train_embeddings = all_embeddings["train_embeddings"]
+    validation_embeddings = all_embeddings["val_embeddings"]
+    test_embeddings = all_embeddings["test_embeddings"]
+
+    train_labels = all_embeddings["train_labels"]
+    val_labels = all_embeddings["val_labels"]
+    test_labels = all_embeddings["test_labels"]
+
+    return train_embeddings, validation_embeddings, test_embeddings, train_labels, val_labels, test_labels
+
+def get_train_phenotypes(variable_name):
+    df = dl_utils.preprocess()
+    split_indices = np.load("./helper_data/split_indices.npz")
+    train_idx = split_indices["train"]
+
+    if variable_name not in df.columns:
+        raise ValueError(f"Variable '{variable_name}' not found in phenotype data.")
+
+    return df.iloc[train_idx][variable_name].values
+
 def encode_space():
     #load unencoded data
     train_loader , val_loader, test_loader = dl_utils.dataloader(dl_utils.preprocess())
@@ -34,7 +62,7 @@ def encode_space():
     val_embeddings, val_labels = extract_embeddings(val_loader, model, device)
     test_embeddings, test_labels = extract_embeddings(test_loader, model, device)
 
-    np.savez("latent_embeddings.npz",
+    np.savez(latent_embeddings_path,
             train_embeddings=train_embeddings, train_labels=train_labels,
             val_embeddings=val_embeddings, val_labels=val_labels,
             test_embeddings=test_embeddings, test_labels=test_labels)
