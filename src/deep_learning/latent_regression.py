@@ -5,10 +5,11 @@ from torch import nn, optim
 from torchvision import datasets, transforms
 import matplotlib.pyplot as plt
 from encode_space import load_embeddings
-
+import numpy as np
 
 latent_regression_coefficients_path = home_directory / "models" / "latent_regressor.pth"
 
+regression_predictions_path = "./helper_data/regression_predictions"
 
 
 #deep learning hyperperameters
@@ -21,7 +22,7 @@ LAMBDA = 1e-9
 
 
 
-EPOCHS = 4
+EPOCHS = 8
 
 def train_model(load_old_model = False):
     #load embeddings and labels
@@ -100,7 +101,21 @@ def train_model(load_old_model = False):
 
     #create predictions for all data points so we can evalualte effect of phenotype on each
     #save predictions into numpy arrays
-    train_regression_predictions = np.zeroes(train_labels.shape())
+    train_regression_predictions = np.zeros(train_labels.shape)
+    val_regression_predictions = np.zeros(val_labels.shape)
+    test_regression_predictions = np.zeros(test_labels.shape)
+    with torch.no_grad():
+        for i,patient in enumerate(train_embeddings):
+            train_regression_predictions[i] = model.linear_regress(patient)
+
+        for i,patient in enumerate(val_embeddings):
+            val_regression_predictions[i] = model.linear_regress(patient)
+
+        for i,patient in enumerate(test_embeddings):
+            test_regression_predictions[i] = model.linear_regress(patient)
+
+    np.savez(regression_predictions_path, train_regression_predictions=train_regression_predictions, val_regression_predictions = val_regression_predictions, test_regression_predictions = test_regression_predictions)
+
 
     plot_data(epoch_losses, validation_losses, block=True)
 
