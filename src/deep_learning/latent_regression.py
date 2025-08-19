@@ -1,15 +1,15 @@
-import dl_utils
+from dl_utils import home_directory
 from regression_autoencoder_model import Regression_Autoencoder, model_directory, recon_loss, regression_loss, RAE_loss
 import torch
 from torch import nn, optim
 from torchvision import datasets, transforms
 import matplotlib.pyplot as plt
+from encode_space import load_embeddings
 
 
-#configure file paths to save models
-print(f"model directory: {model_directory}")
-pure_encoder_path = model_directory / "pure_encoder.pth"
-pure_decoder_path = model_directory / "pure_decoder.pth"
+latent_regression_coefficients_path = home_directory / "models" / "latent_regressor.pth"
+
+
 
 #deep learning hyperperameters
 
@@ -21,28 +21,22 @@ LAMBDA = 1e-9
 
 
 
-EPOCHS = 70
+EPOCHS = 4
 
-def train_model(load_old_model = True):
-    #load data
-    train_loader , val_loader, test_loader = dl_utils.dataloader(dl_utils.preprocess())
-    
-    #get shape of inputs by iterating once through a DataLoader
-    for X_batch, _ in train_loader:
-        print("Input batch shape", X_batch.shape)
-        input_size = X_batch.shape[1]
-        break
+def train_model(load_old_model = False):
+    #load embeddings and labels
+    train_embeddings, val_embeddings, test_embeddings, train_labels, val_labels, test_labels = load_embeddings()
+
 
     #use CUDA to make use of any avilable NVIDIA GPus, if not just use CPU
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-    model = Regression_Autoencoder(input_size)
+    model = Regression_Autoencoder()
     if load_old_model:
-        encoder_state = torch.load(pure_encoder_path, map_location = device)
-        decoder_state = torch.load(pure_decoder_path, map_location = device)
-        model.encoder.load_state_dict(encoder_state)
-        model.decoder.load_state_dict(decoder_state)
+        regressor_state = torch.load(latent_regression_coefficients_path, map_location = device)
+        model.linear_regressor.load_state_dict(regressor_state)
+
         print("Old model loaded")
 
     loss_function = nn.MSELoss()
@@ -58,11 +52,11 @@ def train_model(load_old_model = True):
     print("Initializing training on", device)
     for epoch in range(EPOCHS):
         epoch_loss = 0
-        for X_batch,_ in train_loader:
+        for x,y in zip(train_embeddings, train_labels):
             
-            reconstructed = model.forward(X_batch)
+            prediction = model.linear_regress(x)
             
-            loss = loss_function(reconstructed, X_batch)
+            loss = loss_function(prediction, y)
 
             optimizer.zero_grad()
             loss.backward()
@@ -71,15 +65,17 @@ def train_model(load_old_model = True):
             
             #training_losses.append(loss.item())
             epoch_loss += loss.item()
-        epoch_loss /= len(train_loader)
+
+        epoch_loss /= len(train_embeddings)
         epoch_losses.append(epoch_loss)
         #calculate validation loss for epoch
         with torch.no_grad():
             val_loss = 0
-            for X_batch, _ in val_loader:
-                reconstructed_val = model.forward(X_batch)
-                val_loss += loss_function(reconstructed_val, X_batch).item()
-            val_loss /= len(val_loader)
+            for x,y in zip(val_embeddings, val_labels):
+                prediction = model.linear_regress(x)
+
+                val_loss += loss_function(prediction, y).item()
+            val_loss /= len(val_embeddings)
             validation_losses.append(val_loss)
 
         #stop training if validation loss starts to increase for multiple epochs
@@ -93,16 +89,19 @@ def train_model(load_old_model = True):
     #test the model on the test set
     test_loss = 0
     with torch.no_grad():
-        for X_batch,_ in test_loader:
-            reconstructed_test = model(X_batch)
-            test_loss += loss_function(reconstructed_test, X_batch).item()
-        test_loss /= len(test_loader)
+        for x,y in zip(test_embeddings, test_labels):
+            prediction = model.linear_regress(x)
+            test_loss += loss_function(prediction,y).item()
+        test_loss /= len(test_embeddings)
     print(f"Test Loss: {test_loss:.6f}")
 
     #Save model parameters for later use, separating encoder and decoder
-    torch.save(model.encoder.state_dict(), pure_encoder_path)
-    torch.save(model.decoder.state_dict(), pure_decoder_path)
-    
+    torch.save(model.linear_regressor.state_dict(), latent_regression_coefficients_path)
+
+    #create predictions for all data points so we can evalualte effect of phenotype on each
+    #save predictions into numpy arrays
+    train_regression_predictions = np.zeroes(train_labels.shape())
+
     plot_data(epoch_losses, validation_losses, block=True)
 
 
@@ -121,14 +120,13 @@ def plot_data(loss1, loss2, block=False):
     plt.ylabel('Loss')
     plt.title('Training and Validation Loss')
     plt.legend()
-    #save plot
-    plt.savefig("./autoencoder_losses.png")
-
     plt.show(block=block)
 
-    
+    #save plot
+    plt.savefig("./autoencoder_losses.png")
+    plt.close('all')
 
 
 
 if __name__ == "__main__":
-    train_model(load_old_model = False) 
+    train_model(load_old_model = False)

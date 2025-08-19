@@ -26,7 +26,7 @@ model_directory = home_directory / "models"
 #implement a Regression loss variational autoencoder
 # Make sure you don't accidentally put in additional processing 'layers' (problem in earlier versions)
 class Regression_Autoencoder(nn.Module):
-    def __init__(self, input_size, latent_dim = 8):
+    def __init__(self, input_size=44, latent_dim = 8):
         super().__init__()
         self.encoder = nn.Sequential(
             nn.Linear(input_size, 32),

@@ -14,15 +14,16 @@ def load_embeddings(path = latent_embeddings_path):
     #load latent embeddings from npz file
     all_embeddings = np.load(latent_embeddings_path)
     #separate embeddings into 3 distinct set
-    train_embeddings = all_embeddings["train_embeddings"]
-    validation_embeddings = all_embeddings["val_embeddings"]
-    test_embeddings = all_embeddings["test_embeddings"]
+    train_embeddings = torch.tensor(all_embeddings["train_embeddings"])
+    val_embeddings = torch.tensor(all_embeddings["val_embeddings"])
+    test_embeddings = torch.tensor(all_embeddings["test_embeddings"])
 
-    train_labels = all_embeddings["train_labels"]
-    val_labels = all_embeddings["val_labels"]
-    test_labels = all_embeddings["test_labels"]
+    train_labels = torch.tensor(all_embeddings["train_labels"])
+    val_labels = torch.tensor(all_embeddings["val_labels"])
+    test_labels = torch.tensor(all_embeddings["test_labels"])
 
-    return train_embeddings, validation_embeddings, test_embeddings, train_labels, val_labels, test_labels
+    #return all data as pytorch tensors
+    return train_embeddings, val_embeddings, test_embeddings, train_labels, val_labels, test_labels
 
 def get_train_phenotypes(variable_name):
     df = dl_utils.preprocess()
