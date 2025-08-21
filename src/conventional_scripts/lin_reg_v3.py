@@ -1,10 +1,10 @@
-import utils
+import conventional_utils as conventional_utils
 import sys
 from sklearn.linear_model import Lasso, Ridge
 from sklearn.metrics import mean_squared_error
 import numpy as np
 import pandas as pd
-from utils import home_directory
+from conventional_utils import home_directory
 
 #Implementation of linear regression with interaction terms
 #Iterative process to average coefficients over multiple iterations
@@ -20,33 +20,8 @@ coefficients_folder = home_directory / "data" / "regression_results"
 def linear_regression(regression_type, save, iterations, datamode = "r"):
 
     #load data
-    df = utils.preprocess(datamode = datamode)
-
-    train_loader , val_loader, test_loader = utils.dataloader(df, new_scaler=True, generate_indices=True)
-
-    #get shape of inputs by iterating once through a DataLoader
-    for X_batch, _ in train_loader:
-        print("Input batch shape", X_batch.shape)
-        input_size = X_batch.shape[1]
-        break
-
-    # ---- new: collect full training arrays from the DataLoader ----
-    X_train_parts = []
-    y_train_parts = []
-    for Xb, yb in train_loader:
-        # ensure tensors moved to cpu and converted to numpy
-        if hasattr(Xb, "detach"):
-            Xb = Xb.detach().cpu().numpy()
-        if hasattr(yb, "detach"):
-            yb = yb.detach().cpu().numpy()
-        X_train_parts.append(Xb)
-        y_train_parts.append(yb)
-
-    if len(X_train_parts) == 0:
-        raise ValueError("Training DataLoader is empty")
-
-    X_train = np.vstack(X_train_parts)
-    y_train = np.concatenate(y_train_parts).ravel()
+    df = conventional_utils.preprocess(datamode=datamode)
+    X_train, y_train, input_size = conventional_utils.list_data(df)
     # --------------------------------------------------------------
 
     # Basic sanity checks / defensive programming

@@ -1,24 +1,27 @@
-import deep_learning.utils as utils
+import  conventional_utils as conventional_utils
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 import pandas as pd
 import sys
-#create file paths within the PCA folder to save data
+from conventional_utils import home_directory, get_train_phenotypes
+import numpy as np
 
-pca_vectors_path = r"P:\\MQ_Summer_Student\\PCA\\pca_vectors.csv"
-pca_image_folder = r"P:\\MQ_Summer_Student\\PCA\\pca_images"
+#create file paths to PCA image folder and a folder to save PCA vectors relative to home directory
+pca_vectors_path = home_directory / "data" / "PCA" / "pca_vectors.csv"
+pca_image_folder = home_directory / "data" / "PCA"/ "pca_images"
 
 def run_pca( save_vectors = True):
     #SBP is excluded from PCA because we are trying to find the underlying structure of the data (namely the number of variables needed to predict SBP)
-    df = utils.preprocess(datamode = "f")
-    X,Y = utils.split_and_normalize(df, mode = 1)
+    #load data
+    df = conventional_utils.preprocess(datamode="f")
+    X_train, y_train, input_size = conventional_utils.list_data(df)
 
     #when running quickly on keep 2 dimensions to generate visuals. No real need to keep more than 2 dimensions for visualisation purposes
     #pca = PCA(n_components=2)
 
     pca = PCA()
 
-    principalComponents = pca.fit_transform(X)
+    principalComponents = pca.fit_transform(X_train)
 
     principal_df = pd.DataFrame(data=principalComponents[:, :2], columns=['PC1', 'PC2'])
     
@@ -42,11 +45,14 @@ def run_pca( save_vectors = True):
 
 def pca_overlay(mapvariable = "CM", save_image = True, show = True):
     #Overlay PCA results with a heatmap of a given phenotype to ascribe meaning to clusters in PCA
-    df = utils.preprocess(datamode = "f")
+    
+    #get overlay variable data from data_frame
+    overlay_values = get_train_phenotypes(mapvariable)
+
     PC1, PC2 = run_pca( save_vectors=False)
     #create scaled version of colour map
     plt.figure(figsize=(10, 8))
-    plt.scatter(PC1, PC2, c=df[mapvariable], cmap='viridis', alpha=0.5)
+    plt.scatter(PC1, PC2, c=overlay_values, cmap='viridis', alpha=0.5)
     plt.colorbar(label=mapvariable)
     plt.xlabel('Principal Component 1')
     plt.ylabel('Principal Component 2')

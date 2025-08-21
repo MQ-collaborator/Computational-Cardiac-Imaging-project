@@ -6,7 +6,7 @@ from torchvision import datasets, transforms
 import matplotlib.pyplot as plt
 from encode_space import load_embeddings
 import numpy as np
-
+import pandas as pd
 latent_regression_coefficients_path = home_directory / "models" / "latent_regressor.pth"
 
 regression_predictions_path = "./helper_data/regression_predictions"
@@ -115,7 +115,13 @@ def train_model(load_old_model = False):
             test_regression_predictions[i] = model.linear_regress(patient)
 
     np.savez(regression_predictions_path, train_regression_predictions=train_regression_predictions, val_regression_predictions = val_regression_predictions, test_regression_predictions = test_regression_predictions)
-
+    #save linear regression coefficients to a csv file for use in testing
+    coefficients = model.linear_regressor.linear.weight.cpu().numpy().flatten()
+    coefficients_df = pd.DataFrame({
+        'Column': model.linear_regressor.input_columns,
+        'Coefficient': coefficients
+    })
+    coefficients_df.to_csv(latent_regression_coefficients_path.with_suffix('.csv'), index=False)
 
     plot_data(epoch_losses, validation_losses, block=True)
 

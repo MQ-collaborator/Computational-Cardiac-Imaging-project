@@ -1,11 +1,11 @@
 #program to train PCA on all embeddings then compare results for each dataset and phenotype
-from deep_learning.utils import home_directory, dl_columns_path
+from utils import home_directory, dl_columns_path, get_train_phenotypes
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 import pandas as pd
 import sys
 from sklearn.decomposition import PCA
-from encode_space import latent_embeddings_path, load_embeddings, get_train_phenotypes
+from encode_space import latent_embeddings_path, load_embeddings
 import numpy as np
 
 pca_image_folder = r"./embeddings_pca_images"

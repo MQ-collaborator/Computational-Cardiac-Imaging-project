@@ -1,4 +1,4 @@
-import utils
+import conventional_scripts.conventional_utils as conventional_utils
 import sys
 from sklearn.linear_model import Lasso, Ridge
 from sklearn.metrics import mean_squared_error
@@ -27,7 +27,7 @@ def linear_regression(regression_type, save, iterations, datamode, interaction_m
     
     #load data
 
-    df = utils.preprocess(depth = 1, datamode = datamode)
+    df = conventional_utils.preprocess(depth = 1, datamode = datamode)
 
     #add interaction terms to the dataset if specified
     if interaction_mode == 0:
@@ -44,7 +44,7 @@ def linear_regression(regression_type, save, iterations, datamode, interaction_m
         df['age^2'] = df['age_at_MRI']**2
 
 
-    X_train, X_test, Y_train, Y_test = utils.split_and_normalize(df)
+    X_train, X_test, Y_train, Y_test = conventional_utils.split_and_normalize(df)
 
     
         

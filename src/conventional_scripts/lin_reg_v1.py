@@ -1,4 +1,4 @@
-import  utils
+import  conventional_scripts.conventional_utils as conventional_utils
 import sys
 from sklearn.linear_model import Lasso, Ridge
 from sklearn.metrics import mean_squared_error
@@ -31,8 +31,8 @@ def main():
         return 1
     #load data
 
-    df = utils.preprocess(depth = 1)
-    X_train, X_test, Y_train, Y_test = utils.split_and_normalize(df)
+    df = conventional_utils.preprocess(depth = 1)
+    X_train, X_test, Y_train, Y_test = conventional_utils.split_and_normalize(df)
     #implementation of L1 regression
     if mode == 1:
         lasso = Lasso(alpha=ALPHA)

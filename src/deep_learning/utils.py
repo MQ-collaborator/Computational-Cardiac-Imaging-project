@@ -130,6 +130,16 @@ def dataloader(df, test_size = 0.2, val_size=0.2, random_state = None, generate_
     return train_loader , val_loader, test_loader
 
 
+def get_train_phenotypes(variable_name):
+    df = preprocess()
+    split_indices = np.load("./helper_data/split_indices.npz")
+    train_idx = split_indices["train"]
+
+    if variable_name not in df.columns:
+        raise ValueError(f"Variable '{variable_name}' not found in phenotype data.")
+
+    return df.iloc[train_idx][variable_name].values
+
 
 if __name__ == "__main__":
     df = preprocess()

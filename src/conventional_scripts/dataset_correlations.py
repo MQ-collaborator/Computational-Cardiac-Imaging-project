@@ -1,4 +1,4 @@
-import utils
+import conventional_utils
 import matplotlib.pyplot as plt
 
 #File paths to store files of note
@@ -8,7 +8,7 @@ correlation_heatmap_path = r"P:\\MQ_Summer_Student\\analysis_images\\correlation
 
 def correlation_map(save = True):
     print("Generating Correlations...")
-    df = utils.preprocess()
+    df = conventional_utils.preprocess()
 
     #Calculate correlation coefficients (pearson by default)
     corr = df.corr()

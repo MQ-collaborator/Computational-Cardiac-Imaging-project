@@ -1,1 +1,0 @@
-#program to use linear regression on latent space and original phenotypes to find out how much each phenotype variable effects SBP

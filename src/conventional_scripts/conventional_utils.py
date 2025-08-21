@@ -134,7 +134,45 @@ def dataloader(df, test_size = 0.2, val_size=0.2, random_state = None, generate_
 
     return train_loader , val_loader, test_loader
 
+def list_data(df):
+    #load data
+    train_loader , val_loader, test_loader = dataloader(df, new_scaler=True, generate_indices=True)
 
+    #get shape of inputs by iterating once through a DataLoader
+    for X_batch, _ in train_loader:
+        print("Input batch shape", X_batch.shape)
+        input_size = X_batch.shape[1]
+        break
+
+    # ---- new: collect full training arrays from the DataLoader ----
+    X_train_parts = []
+    y_train_parts = []
+    for Xb, yb in train_loader:
+        # ensure tensors moved to cpu and converted to numpy
+        if hasattr(Xb, "detach"):
+            Xb = Xb.detach().cpu().numpy()
+        if hasattr(yb, "detach"):
+            yb = yb.detach().cpu().numpy()
+        X_train_parts.append(Xb)
+        y_train_parts.append(yb)
+
+    if len(X_train_parts) == 0:
+        raise ValueError("Training DataLoader is empty")
+
+    X_train = np.vstack(X_train_parts)
+    y_train = np.concatenate(y_train_parts).ravel()
+
+    return X_train, y_train, input_size
+
+def get_train_phenotypes(variable_name):
+    df = preprocess(datamode="f")
+    split_indices = np.load("./helper_data/split_indices.npz")
+    train_idx = split_indices["train"]
+
+    if variable_name not in df.columns:
+        print(f"Available columns: {df.columns.tolist()}")
+        raise ValueError(f"Variable '{variable_name}' not found in phenotype data.")
+    return df.iloc[train_idx][variable_name].values
 
 if __name__ == "__main__":
     df = preprocess()
