@@ -14,7 +14,7 @@ pure_decoder_path = model_directory / "pure_decoder.pth"
 #deep learning hyperperameters
 
 #learning rate for backpropagation
-ETA = 3e-5
+ETA = 1e-5
 
 #Weight-decay is scaling factor for L2 regularization
 LAMBDA = 1e-9
@@ -131,4 +131,4 @@ def plot_data(loss1, loss2, block=False):
 
 
 if __name__ == "__main__":
-    train_model(load_old_model = False) 
+    train_model(load_old_model = True) 

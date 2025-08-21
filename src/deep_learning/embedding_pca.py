@@ -1,5 +1,5 @@
 #program to train PCA on all embeddings then compare results for each dataset and phenotype
-from dl_utils import home_directory
+from dl_utils import home_directory, dl_columns_path
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 import pandas as pd
@@ -10,7 +10,10 @@ import numpy as np
 
 pca_image_folder = r"./embeddings_pca_images"
 
-
+def main():
+    with open(dl_columns_path, 'r') as f:
+        #run PCA iteratively with 
+        columns = f.read().splitlines()
 def run_pca( save_vectors = True):
     #load latent embeddings from npz file
     train_embeddings, validation_embeddings, test_embeddings, train_labels, val_labels, test_labels = load_embeddings()
