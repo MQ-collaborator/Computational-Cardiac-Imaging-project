@@ -1,4 +1,4 @@
-from dl_utils import home_directory
+from deep_learning.utils import home_directory
 from regression_autoencoder_model import Regression_Autoencoder, model_directory, recon_loss, regression_loss, RAE_loss
 import torch
 from torch import nn, optim

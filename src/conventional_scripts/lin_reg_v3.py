@@ -4,7 +4,7 @@ from sklearn.linear_model import Lasso, Ridge
 from sklearn.metrics import mean_squared_error
 import numpy as np
 import pandas as pd
-from utils import columns_path
+from utils import home_directory
 
 #Implementation of linear regression with interaction terms
 #Iterative process to average coefficients over multiple iterations
@@ -16,51 +16,58 @@ from utils import columns_path
 ALPHA = 0.2
 
 """File paths"""
-coefficients_path = r"P:\\MQ_Summer_Student\\regression_results\\averaged_regression_coefficients.csv"
+coefficients_folder = home_directory / "data" / "regression_results" 
+def linear_regression(regression_type, save, iterations, datamode = "r"):
 
-sorted_coefficients_path = r"P:\\MQ_Summer_Student\\regression_results\\average_sorted_regression_coefficients.csv"
-
-
-def linear_regression(regression_type, save, iterations, datamode, interaction_mode = 0):
-    print("Running linear regression iteratively)")
 
     
     #load data
 
-    df = utils.preprocess(depth = 1, datamode = datamode)
-
-    #add interaction terms to the dataset if specified
-    if interaction_mode == 0:
-        #add interaction terms to the dataset
-        df['age*sex'] = df['age_at_MRI'] * df['Sex']
-
-        df['age^2'] = df['age_at_MRI']**2
-    #for mode 1 no changes needed - interaction terms are not added
-    elif interaction_mode == 2:
-        #only interaction terms
-        df = df[["SBP_at_MRI", "age_at_MRI", "Sex"]].copy()
-        df['age*sex'] = df['age_at_MRI'] * df['Sex']
-
-        df['age^2'] = df['age_at_MRI']**2
-
-
-    X_train, X_test, Y_train, Y_test = utils.split_and_normalize(df)
+    df = utils.preprocess(datamode = datamode)
 
     
-        
+    train_loader , val_loader, test_loader = utils.dataloader(df, new_scaler=True, generate_indices=True)
+
+    #get shape of inputs by iterating once through a DataLoader
+    for X_batch, _ in train_loader:
+        print("Input batch shape", X_batch.shape)
+        input_size = X_batch.shape[1]
+        break
+
+    # ---- new: collect full training arrays from the DataLoader ----
+    X_train_parts = []
+    y_train_parts = []
+    for Xb, yb in train_loader:
+        # ensure tensors moved to cpu and converted to numpy
+        if hasattr(Xb, "detach"):
+            Xb = Xb.detach().cpu().numpy()
+        if hasattr(yb, "detach"):
+            yb = yb.detach().cpu().numpy()
+        X_train_parts.append(Xb)
+        y_train_parts.append(yb)
+
+    if len(X_train_parts) == 0:
+        raise ValueError("Training DataLoader is empty")
+
+    X_train = np.vstack(X_train_parts)
+    y_train = np.concatenate(y_train_parts).ravel()
+    # --------------------------------------------------------------
+
     #Iterative regression. Average values stored in coefficients_path
-    coefficients = np.zeros(X_train.shape[1])
+    coefficients = np.zeros(input_size)
     average_rmse = 0
     
     if regression_type == 1:
         for i in range(iterations):
+
             lasso = Lasso(alpha=ALPHA)
-            lasso.fit(X_train, Y_train)
+            #fit model to training data
+            lasso.fit(X_train, y_train)
 
             #store y values predicted by regression
-            y_pred = lasso.predict(X_test)
+            y_pred = lasso.predict(X_train)
             #print root mean squared error(an easy to understand measure of error)
-            rmse = np.sqrt(mean_squared_error(Y_test, y_pred))
+            rmse = np.sqrt(mean_squared_error(y_train, y_pred))
 
             coefficients += lasso.coef_
             average_rmse += rmse
@@ -68,10 +75,10 @@ def linear_regression(regression_type, save, iterations, datamode, interaction_m
     else:
         for i in range(iterations):
             ridge = Ridge(alpha=ALPHA)
-            ridge.fit(X_train, Y_train)
-            y_pred = ridge.predict(X_test)
+            ridge.fit(X_train, y_train)
+            y_pred = ridge.predict(X_train)
      
-            rmse = np.sqrt(mean_squared_error(Y_test, y_pred))
+            rmse = np.sqrt(mean_squared_error(y_train, y_pred))
             coefficients += ridge.coef_
             average_rmse += rmse
             print(i)
@@ -90,7 +97,11 @@ def linear_regression(regression_type, save, iterations, datamode, interaction_m
         })
 
         #save coefficients to a csv file in the order they appear in the dataset
+        #seprate coefficient for mode r and mode f regressions (different input data)
+        coefficients_path = coefficients_folder / (f"coefficients_{datamode}.csv")
         coef_df.to_csv(coefficients_path, index=False)
+
+        sorted_coefficients_path = coefficients_folder / (f"sorted_coefficients_{datamode}.csv")
 
         #sort by coefficient absolute value (most impactful features first)
         coef_df['Abs_Coefficient'] = coef_df['Coefficient'].abs()
@@ -106,14 +117,14 @@ def linear_regression(regression_type, save, iterations, datamode, interaction_m
 
 if __name__ == "__main__":
     status = 0
-    if len(sys.argv) != 6:
-        print("Usage: python lin_reg_vn.py type save datamode iterations interaction_mode ")
+    if len(sys.argv) != 5:
+        print("Usage: python lin_reg_vn.py type save datamode iterations  ")
         print("Regression types: (1 or 2).")
         print("Save modes: 0 to save coefficients, 1 to not save coefficients.")
         
         print("Preprocess datamode: 'r' for reduced dataset, 'f' for full dataset.")
         print("Iterations: number of iterations to run the regression for. Default is 100.")
-        print("Interaction mode: 0 for dataset and interaction, 1 for dataset without interaction, 2 for only interaction)")
+        
         status = 1
     regression_type = int(sys.argv[1])
     if regression_type!= 1 and regression_type != 2:
@@ -124,6 +135,5 @@ if __name__ == "__main__":
 
     iterations = int(sys.argv[4])
 
-    interaction_mode = int(sys.argv[5]) if len(sys.argv) > 5 else 0
     if status == 0:
-        linear_regression(regression_type, save, iterations, datamode=datamode, interaction_mode = interaction_mode)
+        linear_regression(regression_type, save, iterations, datamode=datamode)

@@ -3,7 +3,7 @@
 These values when saved than then be used to perform PCA or to train a linear regression model
 
 we expect to be able to explain more than 9-% of variance with 16 latent variables"""
-import dl_utils
+import deep_learning.utils as utils
 import deep_learning.pure_autoencoder as pure_autoencoder
 from deep_learning.pure_autoencoder import AutoEncoder
 import pandas as pd
@@ -13,7 +13,7 @@ encoded_data_path = 'encoded_data.csv'
 
 def main():
     #load dataset
-    X,Y = dl_utils.split_and_normalize(dl_utils.preprocess(), mode=0)
+    X,Y = utils.split_and_normalize(utils.preprocess(), mode=0)
 
     #load encoder
     input_size = X.shape[1]

@@ -10,3 +10,4 @@ Summary of results: deep learnng provided far superior feature extraction and as
 The most important parts of this project are the model architecture used (regression_autencoder_model.py) a standard MLP. Whilst this program is largely educational, the images generated highlight important clinical relationships. 
 The relevant training data is subject to strict data protection (UK biobank) and as such not inclduded. Results are source code can be disseminated legally.
 
+Usage: run programs from the src directory

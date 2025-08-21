@@ -1,4 +1,4 @@
-import dl_utils
+import deep_learning.utils as utils
 import matplotlib.pyplot as plt
 import pandas as pd
 from latent_space import encoded_data_path
@@ -38,11 +38,11 @@ def linear_regression():
 
     #load encoded data
     df = pd.read_csv(encoded_data_path)
-    general_df = dl_utils.preprocess()
+    general_df = utils.preprocess()
     df['SBP_at_MRI'] = general_df['SBP_at_MRI']
 
 
-    X_train, X_val, X_test, Y_train, Y_val, Y_test = dl_utils.split_and_normalize(df)
+    X_train, X_val, X_test, Y_train, Y_val, Y_test = utils.split_and_normalize(df)
     
     print("Shape of X_train:", X_train.shape)
     print("Shape of Y_train:", Y_train.shape)

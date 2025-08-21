@@ -1,4 +1,4 @@
-import dl_utils
+import deep_learning.utils as utils
 from regression_autoencoder_model import Regression_Autoencoder, model_directory, recon_loss, regression_loss, RAE_loss
 import torch
 from torch import nn, optim
@@ -25,7 +25,7 @@ EPOCHS = 70
 
 def train_model(load_old_model = True):
     #load data
-    train_loader , val_loader, test_loader = dl_utils.dataloader(dl_utils.preprocess())
+    train_loader , val_loader, test_loader = utils.dataloader(utils.preprocess())
     
     #get shape of inputs by iterating once through a DataLoader
     for X_batch, _ in train_loader:

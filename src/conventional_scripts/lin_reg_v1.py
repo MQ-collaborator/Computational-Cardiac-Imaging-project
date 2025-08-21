@@ -1,10 +1,10 @@
-import utils
+import  utils
 import sys
 from sklearn.linear_model import Lasso, Ridge
 from sklearn.metrics import mean_squared_error
 import numpy as np
 import pandas as pd
-from utils import columns_path
+from deep_learning.utils import columns_path
 
 
 """"List of variables affecting style of training"""

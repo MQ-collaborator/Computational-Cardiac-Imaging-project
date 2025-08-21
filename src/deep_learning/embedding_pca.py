@@ -1,5 +1,5 @@
 #program to train PCA on all embeddings then compare results for each dataset and phenotype
-from dl_utils import home_directory, dl_columns_path
+from deep_learning.utils import home_directory, dl_columns_path
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 import pandas as pd

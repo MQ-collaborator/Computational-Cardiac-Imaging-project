@@ -1,4 +1,4 @@
-import dl_utils
+import deep_learning.utils as utils
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 import pandas as pd
@@ -52,7 +52,7 @@ def run_pca( save_vectors = True):
 
 def pca_overlay(mapvariable , save_image = True, show = True):
     #Overlay PCA results with a heatmap of a given phenotype to ascribe meaning to clusters in PCA
-    df = dl_utils.preprocess()
+    df = utils.preprocess()
     PC1, PC2 = run_pca( save_vectors=True)
     #create scaled version of colour map
     plt.figure(figsize=(10, 8))

@@ -1,4 +1,4 @@
-import utils
+import deep_learning.utils as utils
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 import pandas as pd

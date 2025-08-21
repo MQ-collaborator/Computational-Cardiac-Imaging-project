@@ -1,6 +1,6 @@
 #encode latent space and save as tensor. Include labels separately
 #important to use model.eval() to disable dropout!!!
-import dl_utils
+import deep_learning.utils as utils
 from pure_autoencoder import pure_encoder_path, pure_decoder_path
 from regression_autoencoder_model import Regression_Autoencoder
 import torch
@@ -26,7 +26,7 @@ def load_embeddings(path = latent_embeddings_path):
     return train_embeddings, val_embeddings, test_embeddings, train_labels, val_labels, test_labels
 
 def get_train_phenotypes(variable_name):
-    df = dl_utils.preprocess()
+    df = utils.preprocess()
     split_indices = np.load("./helper_data/split_indices.npz")
     train_idx = split_indices["train"]
 
@@ -37,7 +37,7 @@ def get_train_phenotypes(variable_name):
 
 def encode_space():
     #load unencoded data
-    train_loader , val_loader, test_loader = dl_utils.dataloader(dl_utils.preprocess())
+    train_loader , val_loader, test_loader = utils.dataloader(utils.preprocess())
 
     #get shape of inputs by iterating once through a DataLoader
     for X_batch, _ in train_loader:
