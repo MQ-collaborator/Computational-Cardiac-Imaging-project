@@ -13,19 +13,15 @@ from utils import home_directory
 
 """"List of variables affecting style of training"""
 #alpha determines the degree of regularization (must be positive)
-ALPHA = 0.2
+ALPHA = 5e-5
 
 """File paths"""
 coefficients_folder = home_directory / "data" / "regression_results" 
 def linear_regression(regression_type, save, iterations, datamode = "r"):
 
-
-    
     #load data
-
     df = utils.preprocess(datamode = datamode)
 
-    
     train_loader , val_loader, test_loader = utils.dataloader(df, new_scaler=True, generate_indices=True)
 
     #get shape of inputs by iterating once through a DataLoader
@@ -53,37 +49,48 @@ def linear_regression(regression_type, save, iterations, datamode = "r"):
     y_train = np.concatenate(y_train_parts).ravel()
     # --------------------------------------------------------------
 
+    # Basic sanity checks / defensive programming
+    print("X_train shape:", X_train.shape)
+    print("y_train shape:", y_train.shape)
+    if iterations is None or iterations <= 0:
+        raise ValueError(f"Invalid iterations value: {iterations}. Must be > 0")
+
+    # ensure output directory exists
+    coefficients_folder.mkdir(parents=True, exist_ok=True)
+
     #Iterative regression. Average values stored in coefficients_path
-    coefficients = np.zeros(input_size)
-    average_rmse = 0
-    
+    coefficients = np.zeros(input_size, dtype=float)
+    average_rmse = 0.0
+
     if regression_type == 1:
         for i in range(iterations):
-
             lasso = Lasso(alpha=ALPHA)
-            #fit model to training data
             lasso.fit(X_train, y_train)
-
-            #store y values predicted by regression
             y_pred = lasso.predict(X_train)
-            #print root mean squared error(an easy to understand measure of error)
             rmse = np.sqrt(mean_squared_error(y_train, y_pred))
-
             coefficients += lasso.coef_
             average_rmse += rmse
-            print(i)
+            if i % max(1, iterations//5) == 0:
+                print(f"iter {i}: rmse={rmse:.6f}, coef sample={lasso.coef_[:3]}")
     else:
         for i in range(iterations):
             ridge = Ridge(alpha=ALPHA)
             ridge.fit(X_train, y_train)
             y_pred = ridge.predict(X_train)
-     
             rmse = np.sqrt(mean_squared_error(y_train, y_pred))
             coefficients += ridge.coef_
             average_rmse += rmse
-            print(i)
+            if i % max(1, iterations//5) == 0:
+                print(f"iter {i}: rmse={rmse:.6f}, coef sample={ridge.coef_[:3]}")
+
+    # finalise averages (safe division guaranteed because we validated iterations)
     coefficients /= iterations
     average_rmse /= iterations
+
+    # check for NaNs/Infs before saving
+    if np.isnan(coefficients).any() or np.isinf(coefficients).any():
+        raise RuntimeError("Coefficients contain NaN or Inf; aborting save. Check training data and 'iterations' value.")
+
     #save coefficients to a csv file for use in testing
     if save == 0:
 
