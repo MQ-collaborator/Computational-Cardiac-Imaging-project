@@ -10,7 +10,7 @@ def main(font = 16):
     
     for _, row in df.iterrows():
         plt.errorbar(x=row['Coefficient'], y=row['Column'],
-                                         #xerr=[[row['metabolite beta'] - row['CI 0.025']], [row['CI 0.975'] - row['metabolite beta']]],
+                                         xerr=[[row['Coefficient'] - row['CI 0.025']], [row['CI 0.975'] - row['Coefficient']]],
                                          fmt='o', markersize=7, label=row['Coefficient'], color='tab:blue', elinewidth=3)
         #errors = f'{np.round(row["metabolite beta"], 2)} ({np.round(row["CI 0.025"], 3)}, {np.round(row["CI 0.975"], 3)})'
                 # plt.text(row['metabolite beta'] * 0 + 0.81, row['metabolite'],
