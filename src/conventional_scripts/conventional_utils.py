@@ -156,13 +156,29 @@ def list_data(df):
         X_train_parts.append(Xb)
         y_train_parts.append(yb)
 
+    for Xb, yb in val_loader:
+        if hasattr(Xb, "detach"):
+            Xb = Xb.detach().cpu().numpy()
+        if hasattr(yb, "detach"):
+            yb = yb.detach().cpu().numpy()
+        X_train_parts.append(Xb)
+        y_train_parts.append(yb)
+
+    for Xb, yb in test_loader:
+        if hasattr(Xb, "detach"):
+            Xb = Xb.detach().cpu().numpy()
+        if hasattr(yb, "detach"):
+            yb = yb.detach().cpu().numpy()
+        X_train_parts.append(Xb)
+        y_train_parts.append(yb)
+
     if len(X_train_parts) == 0:
         raise ValueError("Training DataLoader is empty")
 
-    X_train = np.vstack(X_train_parts)
-    y_train = np.concatenate(y_train_parts).ravel()
+    all_x_array= np.vstack(X_train_parts)
+    all_y_array = np.concatenate(y_train_parts).ravel()
 
-    return X_train, y_train, input_size
+    return all_x_array, all_y_array, input_size
 
 def get_train_phenotypes(variable_name):
     df = preprocess(datamode="f")

@@ -10,9 +10,9 @@ def main(font = 16):
     
     for _, row in df.iterrows():
         plt.errorbar(x=row['Coefficient'], y=row['Column'],
-                                         #xerr=[[row['metabolite beta'] - row['CI 0.025']], [row['CI 0.975'] - row['metabolite beta']]],
+                                         xerr=[[row['Coefficient'] - row['CI_0.025']], [row['CI_0.975'] - row['Coefficient']]],
                                          fmt='o', markersize=7, label=row['Coefficient'], color='tab:blue', elinewidth=3)
-        #errors = f'{np.round(row["metabolite beta"], 2)} ({np.round(row["CI 0.025"], 3)}, {np.round(row["CI 0.975"], 3)})'
+        errors = f'{np.round(row["Coefficient"], 2)} ({np.round(row["CI_0.025"], 3)}, {np.round(row["CI_0.975"], 3)})'
                 # plt.text(row['metabolite beta'] * 0 + 0.81, row['metabolite'],
                 #                  errors,
                 #                  ha='left', va='center', size=14, style='normal', color='black')
@@ -21,7 +21,7 @@ def main(font = 16):
         plt.ylabel('Feature', fontsize=font)
         plt.title('Feature Importance in Linear Regression Model', fontsize=font)
         # plt.grid(which='major', color='#EBEBEB', linewidth=0.8)
-        plt.xlim(-1, 1)
+        plt.xlim(-0.5, 0.5)
         plt.xticks([-0.3, 0, 0.3], fontsize=font)
         plt.yticks(fontsize=font)
         plt.gca().set_axisbelow(True)
