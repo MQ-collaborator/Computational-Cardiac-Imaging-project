@@ -1,4 +1,4 @@
-from deep_learning.utils import home_directory
+from utils import home_directory
 from regression_autoencoder_model import Regression_Autoencoder, model_directory, recon_loss, regression_loss, RAE_loss
 import torch
 from torch import nn, optim
@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 from encode_space import load_embeddings
 import numpy as np
 import pandas as pd
-latent_regression_coefficients_path = home_directory / "models" / "latent_regressor.pth"
+latent_regression_coefficients_path = home_directory / "models" / "latent_regressor.csv"
+latent_regression_model_path = home_directory / "models" / "latent_regressor.pth"
 
 regression_predictions_path = "./helper_data/regression_predictions"
 
@@ -97,7 +98,7 @@ def train_model(load_old_model = False):
     print(f"Test Loss: {test_loss:.6f}")
 
     #Save model parameters for later use, separating encoder and decoder
-    torch.save(model.linear_regressor.state_dict(), latent_regression_coefficients_path)
+    torch.save(model.linear_regressor.state_dict(), latent_regression_model_path)
 
     #create predictions for all data points so we can evalualte effect of phenotype on each
     #save predictions into numpy arrays
@@ -116,12 +117,13 @@ def train_model(load_old_model = False):
 
     np.savez(regression_predictions_path, train_regression_predictions=train_regression_predictions, val_regression_predictions = val_regression_predictions, test_regression_predictions = test_regression_predictions)
     #save linear regression coefficients to a csv file for use in testing
-    coefficients = model.linear_regressor.linear.weight.cpu().numpy().flatten()
-    coefficients_df = pd.DataFrame({
-        'Column': model.linear_regressor.input_columns,
-        'Coefficient': coefficients
-    })
-    coefficients_df.to_csv(latent_regression_coefficients_path.with_suffix('.csv'), index=False)
+    #linear regressor is a sequential model with a single linear layer
+    coefficients = model.linear_regressor[0].weight.detach().cpu().numpy().flatten()
+    #save coefficients directly to a csv file (latent features have an order but no names)
+    #save np array to csv 
+    print("Latent regression coefficients:", coefficients)
+    coefficients_df = pd.DataFrame(coefficients, columns=['Coefficient'])
+    coefficients_df.to_csv(latent_regression_coefficients_path.with_suffix(".csv"), index=False)
 
     plot_data(epoch_losses, validation_losses, block=True)
 

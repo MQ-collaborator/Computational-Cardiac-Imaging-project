@@ -1,6 +1,6 @@
 #encode latent space and save as tensor. Include labels separately
 #important to use model.eval() to disable dropout!!!
-import deep_learning.utils as utils
+import utils
 from pure_autoencoder import pure_encoder_path, pure_decoder_path
 from regression_autoencoder_model import Regression_Autoencoder
 import torch

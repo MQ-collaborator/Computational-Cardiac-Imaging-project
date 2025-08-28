@@ -18,7 +18,7 @@ dataset_info_directory = home_directory / "data" / "dataset_info"
 dl_columns_path = dataset_info_directory / "dl_column_names.csv"
 
 #store scalers and indices for reuse
-helper_directory = r"./helper_data"
+helper_directory = home_directory / "src" / "deep_learning" / "helper_data"
 
 class features_labels_Dataset(Dataset):
     def __init__(self,X,y,dtype=torch.float32):

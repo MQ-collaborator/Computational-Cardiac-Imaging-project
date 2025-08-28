@@ -1,4 +1,4 @@
-import deep_learning.utils as utils
+import utils
 from regression_autoencoder_model import Regression_Autoencoder, model_directory, recon_loss, regression_loss, RAE_loss
 import torch
 from torch import nn, optim
